@@ -4,10 +4,8 @@ Created on Wed May 28 11:31:04 2025
 
 @author: yjheelan
 """
-
 import pandas as pd
 import numpy as np
-#import cv2
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -64,7 +62,7 @@ input_matrix = np.column_stack([
 # Les sorties-----------------------------------------------------------------
 outputNames = ['Total_MW', 'Thermal_MW', 'Hydro_MW', 
                'Solar_MW', 'Wind_MW', 'BioEner_MW', 'Import_MW']
-# Résumé Initialisation---------------------------------------------------------------------------
+# Résumé de l'nitialisation---------------------------------------------------------------------------
 """  
 window_size = 48  # Number of rows for an observation
 numHiddenUnits = 1000 # Number of hidden neurons (4096)
