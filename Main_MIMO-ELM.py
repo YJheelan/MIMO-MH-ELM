@@ -452,10 +452,10 @@ ax4.set_ylabel('nMAE moyen')
 ax4.set_title('Évolution du nMAE par horizon')
 ax4.legend()
 ax4.grid(True, alpha=0.3)
-
+"""
 plt.tight_layout()
 plt.show()
-"""
+
 #GRAPHE 3---------------------------------------------------------------------------
 # Create heatmaps for detailed results by variable and horizon (ELM)
 
