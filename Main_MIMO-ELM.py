@@ -69,12 +69,12 @@ window_size = 48  # Number of rows for an observation
 numHiddenUnits = 1000 # Number of hidden neurons (4096)
 numInitializations = 1  # Number of initializations to try
 Entrées : "Production totale (MW)", "Thermique (MW)", "Hydraulique (MW)", "Micro-hydraulique (MW)", "Solaire photovoltaïque (MW)", "Eolien (MW)", "Bioénergies (MW)", "Importations (MW), Hours_sin, Hours_cos"
-Sorties : 'Total_MW', 'Thermal_MW', 'Hydro_MW', 'Solar_MW', 'Wind_MW', 'BioEner_MW', 'Import_MW'
+Sorties : 'Total_MW', 'Thermal_MW', 'Hydro_MW','Micro_Hydro_MW' 'Solar_MW', 'Wind_MW', 'BioEner_MW', 'Import_MW'
 
 Pour le modèle MIMO-ELM, la paramétrisation est la suivante :
-    Entrées : 7 sources énergétiques observées sur 48 heures et 2 composantes temporelles, soit 338 entrées;
+    Entrées : 8 sources énergétiques observées sur 48 heures et 2 composantes temporelles, soit 386 entrées;
     Couche cachée : 1000 neurones;
-    Sorties : 7 * 24 = 168;
+    Sorties : 8 * 24 = 192;
     Horizon de prévision : 24 heure par pas horaire (par run).
 
 """
