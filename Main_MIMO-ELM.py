@@ -44,6 +44,7 @@ numInitializations = 1  # Number of initializations to try
 TotalProduction_MW = np.maximum(dfData.iloc[:, 2].values, 0)
 Thermal_MW = np.maximum(dfData.iloc[:, 3].values, 0)
 Hydro_MW = np.maximum(dfData.iloc[:, 5].values, 0)
+Micro_Hydro_MW = np.maximum(dfData.iloc[:, 6].values, 0)
 Solar_MW = np.maximum(dfData.iloc[:, 7].values, 0)
 Wind_MW = np.maximum(dfData.iloc[:, 8].values, 0)
 BioEnergy_MW = np.maximum(dfData.iloc[:, 9].values, 0)
@@ -60,7 +61,7 @@ input_matrix = np.column_stack([
     Wind_MW, BioEnergy_MW, Import_MW, Hours_sin, Hours_cos
 ])
 # Les sorties-----------------------------------------------------------------
-outputNames = ['Total_MW', 'Thermal_MW', 'Hydro_MW', 
+outputNames = ['Total_MW', 'Thermal_MW', 'Hydro_MW', 'Micro_Hydro_MW',
                'Solar_MW', 'Wind_MW', 'BioEner_MW', 'Import_MW']
 # Résumé de l'nitialisation---------------------------------------------------------------------------
 """  
