@@ -57,7 +57,7 @@ Hours_sin = np.sin(2 * np.pi * Hours_offset / 24)
 Hours_cos = np.cos(2 * np.pi * Hours_offset / 24)
 ## matrice contenant toutes les variables (Combine toutes les variables (7 énergétiques + 2 temporelles) en une seule matrice)
 input_matrix = np.column_stack([
-    TotalProduction_MW, Thermal_MW, Hydro_MW, Solar_MW, 
+    TotalProduction_MW, Thermal_MW, Hydro_MW, Micro_Hydro_MW, Solar_MW, 
     Wind_MW, BioEnergy_MW, Import_MW, Hours_sin, Hours_cos
 ])
 # Les sorties-----------------------------------------------------------------
