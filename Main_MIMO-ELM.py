@@ -21,8 +21,10 @@ warnings.simplefilter('ignore')
 #Début
 # Mesurer le temps d'exécution
 start_time = time.time()
+
 # import du fichier data
-dfData = pd.read_csv("Data.csv")
+#dfData = pd.read_csv("Data.csv")
+dfData = pd.read_csv("\\\mines-paristech.local\\Sophia\\OIE\\Staff\\yjheelan\\Bureau\\STAGE\\CODE\\Data.csv")
 
 #Supprime les espaces au début et à la fin de tous les noms de colonnes du DataFrame.
 dfData.columns = dfData.columns.str.strip() 
@@ -37,7 +39,6 @@ dfData.drop(['Date'], axis=1, inplace=True)
 window_size = 48  # Number of rows for an observation
 numHiddenUnits = 1000 # Number of hidden neurons (4096)
 numInitializations = 1  # Number of initializations to try
-
 #---------------------------------------------------------------------------
 #Extract necessary columns
 ## On utilise np.maximum(valeur, 0) pour nous assurer que toutes les valeurs sont positives
@@ -57,13 +58,13 @@ Hours_sin = np.sin(2 * np.pi * Hours_offset / 24)
 Hours_cos = np.cos(2 * np.pi * Hours_offset / 24)
 ## matrice contenant toutes les variables (Combine toutes les variables (7 énergétiques + 2 temporelles) en une seule matrice)
 input_matrix = np.column_stack([
-    TotalProduction_MW, Thermal_MW, Hydro_MW, Micro_Hydro_MW, Solar_MW, 
+    TotalProduction_MW, Thermal_MW, Hydro_MW,Micro_Hydro_MW, Solar_MW, 
     Wind_MW, BioEnergy_MW, Import_MW, Hours_sin, Hours_cos
 ])
 # Les sorties-----------------------------------------------------------------
-outputNames = ['Total_MW', 'Thermal_MW', 'Hydro_MW', 'Micro_Hydro_MW',
+outputNames = ['Total_MW', 'Thermal_MW', 'Hydro_MW','Micro_Hydro_MW', 
                'Solar_MW', 'Wind_MW', 'BioEner_MW', 'Import_MW']
-# Résumé de l'nitialisation---------------------------------------------------------------------------
+# Résumé de l'initialisation---------------------------------------------------------------------------
 """  
 window_size = 48  # Number of rows for an observation
 numHiddenUnits = 1000 # Number of hidden neurons (4096)
@@ -80,9 +81,12 @@ Pour le modèle MIMO-ELM, la paramétrisation est la suivante :
 """
 #---------------------------------------------------------------------------
 # On va faire une boucle qui va calculer pour chaque horizon de 1 à 24h les métriques + prévisions
-# Initialise liste vide
+# Initialise liste vide : listes pour MIMO-ELM
 all_results = []
 horizon_metrics = {}
+# Ajouter les métriques de persistance horizon
+horizon_metrics_persist = {}
+all_results_persist = []
 # listes pour les métriques de persistance 24h
 horizon_metrics_24h = {}
 all_results_24h = []
@@ -153,8 +157,6 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
         YPred = H_test @ outputWeights # Prédictions non normalisées
         YPred = np.maximum(YPred, 0)   # S'assurer que les valeurs prédites sont non négatives
         
-        
-        
         #---------------------------------------------------------------------
         # Calculate error metrics
         rmse_values = np.zeros(numOutputs)
@@ -206,6 +208,7 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
     # Calculer les métriques pour les prédictions et les deux persistances
     results_for_horizon = []
     results_for_horizon_24h = []
+    results_for_horizon_persist = []  # Nouvelle liste pour persistance horizon
     
     for j in range(numOutputs):
         y_true = YTest[:, j]
@@ -231,10 +234,17 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
         
         # Persistence metrics
         rmse_persist = np.sqrt(np.mean((y_persist - y_true) ** 2))
+        mae_persist = np.mean(np.abs(y_persist - y_true))
+        mbe_persist = np.mean(y_persist - y_true)
+        
         if mean_y != 0:
             nrmse_persist = rmse_persist / mean_y
+            nmae_persist = mae_persist / mean_y
+            nmbe_persist = mbe_persist / mean_y
         else:
             nrmse_persist = rmse_persist
+            nmae_persist = mae_persist
+            nmbe_persist = mbe_persist
         
         # Persistence 24h metrics
         rmse_persist_24h = np.sqrt(np.mean((y_persist_24h - y_true) ** 2))
@@ -255,7 +265,6 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
             gain = (nrmse_persist - nrmse) / nrmse_persist
         else:
             gain = 0
-
         # Gain calculation (vs 24h persistence)
         if nrmse_persist_24h != 0:
             gain_24h = (nrmse_persist_24h - nrmse) / nrmse_persist_24h
@@ -269,7 +278,12 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
             r2 = 1 - (ss_res / ss_tot)
         else:
             r2 = 0
-
+        # R2 pour persistence horizon
+        ss_res_persist = np.sum((y_true - y_persist) ** 2)
+        if ss_tot != 0:
+            r2_persist = 1 - (ss_res_persist / ss_tot)
+        else:
+            r2_persist = 0
         # R2 pour persistence 24h #
         ss_res_24h = np.sum((y_true - y_persist_24h) ** 2)
         if ss_tot != 0:
@@ -281,7 +295,11 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
         results_for_horizon.append([
             prediction_horizon, outputNames[j], nrmse, gain, nmae, nmbe, r2
         ])
-
+        # Ajouter aux résultats de persistence horizon
+        results_for_horizon_persist.append([
+            prediction_horizon, outputNames[j], nrmse_persist, 0, 
+            nmae_persist, nmbe_persist, r2_persist
+        ])
         # Ajouter aux résultats de persistence 24h
         results_for_horizon_24h.append([
             prediction_horizon, outputNames[j], nrmse_persist_24h, gain_24h, 
@@ -291,6 +309,7 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
     #---------------------------------------------------------------------------
     # Store results for this horizon
     all_results.extend(results_for_horizon)
+    all_results_persist.extend(results_for_horizon_persist)
     all_results_24h.extend(results_for_horizon_24h)
     
     ## Store average metrics for this horizon (ELM)
@@ -303,7 +322,16 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
         'nMBE': horizon_avg_metrics[3],
         'R2': horizon_avg_metrics[4]
     }
-
+    ## Store average metrics for this horizon (Persistence horizon)
+    horizon_avg_metrics_persist = np.mean([[row[2], row[3], row[4], row[5], row[6]] 
+                                          for row in results_for_horizon_persist], axis=0)
+    horizon_metrics_persist[prediction_horizon] = {
+        'nRMSE': horizon_avg_metrics_persist[0],
+        'Gain': horizon_avg_metrics_persist[1],
+        'nMAE': horizon_avg_metrics_persist[2],
+        'nMBE': horizon_avg_metrics_persist[3],
+        'R2': horizon_avg_metrics_persist[4]
+    }
     ## Store average metrics for this horizon (Persistence 24h)
     horizon_avg_metrics_24h = np.mean([[row[2], row[3], row[4], row[5], row[6]] 
                                        for row in results_for_horizon_24h], axis=0)
@@ -330,7 +358,7 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
     for j in range(numOutputs):
         ax = axes[j]
         ax.plot(YTest[:, j], 'b-', linewidth=2, label='Valeurs réelles', alpha=0.8)
-        ax.plot(YPred_final[:, j], 'r--', linewidth=2, label='ELM', alpha=0.8)
+        ax.plot(YPred_final[:, j], 'r--', linewidth=2, label='MIMO-ELM', alpha=0.8)
         ax.plot(YPersistence[:, j], 'g:', linewidth=2, label='Persistence (horizon)', alpha=0.7)
        
         x_vals = range(start_pers24, len(YPersistence_24h[:, j]))
@@ -343,7 +371,7 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
         row_24h = df_results_24h.iloc[j]
         
         ax.set_title(
-            f"ELM - nRMSE: {row_elm['nRMSE']:.4f}, Gain: {row_elm['Gain']:.4f}, R²: {row_elm['R2']:.4f}\n"
+            f"MIMO-ELM - nRMSE: {row_elm['nRMSE']:.4f}, Gain: {row_elm['Gain']:.4f}, R²: {row_elm['R2']:.4f}\n"
             f"Pers24h - nRMSE: {row_24h['nRMSE']:.4f}, R²: {row_24h['R2']:.4f}",
             fontsize=9
         )
@@ -359,25 +387,32 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
 # Create comprehensive results DataFrames + print results
 columns = ["Horizon", "Variable", "nRMSE", "Gain", "nMAE", "nMBE", "R2"]
 df_all_results = pd.DataFrame(all_results, columns=columns)
+df_all_results_persist = pd.DataFrame(all_results_persist, columns=columns)
 df_all_results_24h = pd.DataFrame(all_results_24h, columns=columns)
-
 print("\nRécapitulatif des métriques ELM (vs Persistence horizon):")
 print(df_all_results.to_string(index=False, float_format="{:.5f}".format))
-
+print("\nRécapitulatif des métriques Persistence horizon:")
+print(df_all_results_persist.to_string(index=False, float_format="{:.5f}".format))
 print("\nRécapitulatif des métriques Persistence 24h:")
 print(df_all_results_24h.to_string(index=False, float_format="{:.5f}".format))
-
 #---------------------------------------------------------------------------
 # Create summary by horizon for both models
 horizon_summary = []
+horizon_summary_persist = []
 horizon_summary_24h = []
-
 for h in range(1, 25):
     # ELM metrics
     metrics = horizon_metrics[h]
     horizon_summary.append([
         h, metrics['nRMSE'], metrics['Gain'], 
         metrics['nMAE'], metrics['nMBE'], metrics['R2']
+    ])
+    
+    # Persistence horizon metrics
+    metrics_persist = horizon_metrics_persist[h]
+    horizon_summary_persist.append([
+        h, metrics_persist['nRMSE'], metrics_persist['Gain'], 
+        metrics_persist['nMAE'], metrics_persist['nMBE'], metrics_persist['R2']
     ])
     
     # Persistence 24h metrics
@@ -390,33 +425,60 @@ for h in range(1, 25):
 df_horizon_summary = pd.DataFrame(horizon_summary, 
                                   columns=["Horizon", "nRMSE_avg", "Gain_avg", 
                                           "nMAE_avg", "nMBE_avg", "R2_avg"])
+df_horizon_summary_persist = pd.DataFrame(horizon_summary_persist, 
+                                         columns=["Horizon", "nRMSE_avg", "Gain_avg", 
+                                                 "nMAE_avg", "nMBE_avg", "R2_avg"])
 df_horizon_summary_24h = pd.DataFrame(horizon_summary_24h, 
                                       columns=["Horizon", "nRMSE_avg", "Gain_avg", 
                                               "nMAE_avg", "nMBE_avg", "R2_avg"])
-
 # Display results
-
 print("RÉSULTATS ELM PAR HORIZON DE PRÉDICTION (Moyennes sur toutes les variables)")
 print("="*80)
 print(df_horizon_summary.to_string(index=False, float_format="{:.4f}".format))
-
-
+print("RÉSULTATS PERSISTENCE HORIZON PAR HORIZON DE PRÉDICTION (Moyennes sur toutes les variables)")
+print("="*80)
+print(df_horizon_summary_persist.to_string(index=False, float_format="{:.4f}".format))
 print("RÉSULTATS PERSISTENCE 24H PAR HORIZON DE PRÉDICTION (Moyennes sur toutes les variables)")
 print("="*80)
 print(df_horizon_summary_24h.to_string(index=False, float_format="{:.4f}".format))
 
-#GRAPHE 2---------------------------------------------------------------- 
-# Create visualization of metrics by horizon (comparison ELM vs Persistence 24h)
+#-------------------------------------------------------------------------------
+#TIME GPT RESULT
+"""
+Time_GPT_result = {
+    "Horizon": list(range(1, 25)),
+    "nRMSE": [
+        0.2767, 0.3033, 0.3502, 0.4028, 0.3172, 0.4112,
+        0.3319, 0.3521, 0.3304, 0.3103, 0.3135, 0.3236,
+        0.3942, 0.3811, 0.3583, 0.3427, 0.4254, 0.4954,
+        0.4874, 0.4789, 0.4905, 0.5022, 0.4406, 0.3797
+    ],
+    "R2": [
+        0.9960, 0.9959, 0.9968, 0.9969, 0.9952, 0.9968,
+        0.9963, 0.9917, 0.9855, 0.9803, 0.9788, 0.9829,
+        0.9828, 0.9854, 0.9867, 0.9819, 0.9810, 0.9789,
+        0.9767, 0.9779, 0.9798, 0.9783, 0.9739, 0.9700
+    ]
+}
 
-fig, ((ax1, ax2)) = plt.subplots(2, figsize=(16, 12))
+df_metrics_time_gpt = pd.DataFrame(Time_GPT_result)
+
+"""
+#GRAPHE 2---------------------------------------------------------------- 
+# Create visualization of metrics by horizon (comparison ELM vs Persistence 24h) et time GPT
+
+fig, (ax1) = plt.subplots(1, figsize=(16, 12))
 """
 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
 """
 horizons = list(range(1, 25))
 
 # nRMSE plot
-ax1.plot(horizons, df_horizon_summary['nRMSE_avg'], 'b-o', linewidth=2, markersize=4, label='ELM')
+ax1.plot(horizons, df_horizon_summary['nRMSE_avg'], 'b-o', linewidth=2, markersize=4, label='MIMO-ELM')
+ax1.plot(horizons, df_horizon_summary_persist['nRMSE_avg'], 'r-^', linewidth=2, markersize=4, label='Persistence horizon')
 ax1.plot(horizons, df_horizon_summary_24h['nRMSE_avg'], 'm-s', linewidth=2, markersize=4, label='Persistence 24h')
+#ax1.plot(df_metrics_time_gpt["Horizon"], df_metrics_time_gpt["nRMSE"], 'g-s', linewidth=2, markersize=4, label='Timegpt-1-long-horizon')
+
 ax1.set_xlabel('Horizon de prédiction (h)')
 ax1.set_ylabel('nRMSE moyen')
 ax1.set_title('Évolution du nRMSE par horizon')
@@ -424,14 +486,18 @@ ax1.legend()
 ax1.grid(True, alpha=0.3)
 
 # R2 plot
-ax2.plot(horizons, df_horizon_summary['R2_avg'], 'b-o', linewidth=2, markersize=4, label='ELM')
+"""
+ax2.plot(horizons, df_horizon_summary['R2_avg'], 'b-o', linewidth=2, markersize=4, label='MIMO-ELM')
+ax2.plot(horizons, df_horizon_summary_persist['R2_avg'], 'r-^', linewidth=2, markersize=4, label='Persistence horizon')
 ax2.plot(horizons, df_horizon_summary_24h['R2_avg'], 'm-s', linewidth=2, markersize=4, label='Persistence 24h')
+ax2.plot(df_metrics_time_gpt["Horizon"], df_metrics_time_gpt["R2"], 'g-s', linewidth=2, markersize=4, label='timegpt-1-long-horizon')
+
 ax2.set_xlabel('Horizon de prédiction (h)')
 ax2.set_ylabel('R² moyen')
 ax2.set_title('Évolution du R² par horizon')
 ax2.legend()
 ax2.grid(True, alpha=0.3)
-
+"""
 # Gain plot
 """
 ax3.plot(horizons, df_horizon_summary['Gain_avg'], 'b-o', linewidth=2, markersize=4, label='ELM (vs Pers. horizon)')
@@ -446,7 +512,8 @@ ax3.grid(True, alpha=0.3)
 
 # nMAE plot
 """
-ax4.plot(horizons, df_horizon_summary['nMAE_avg'], 'b-o', linewidth=2, markersize=4, label='ELM')
+ax4.plot(horizons, df_horizon_summary['nMAE_avg'], 'b-o', linewidth=2, markersize=4, label='MIMO-ELM')
+ax2.plot(horizons, df_horizon_summary_persist['nMAE_avg'], 'r-^', linewidth=2, markersize=4, label='Persistence horizon')
 ax4.plot(horizons, df_horizon_summary_24h['nMAE_avg'], 'm-s', linewidth=2, markersize=4, label='Persistence 24h')
 ax4.set_xlabel('Horizon de prédiction (h)')
 ax4.set_ylabel('nMAE moyen')
@@ -454,6 +521,7 @@ ax4.set_title('Évolution du nMAE par horizon')
 ax4.legend()
 ax4.grid(True, alpha=0.3)
 """
+
 plt.tight_layout()
 plt.show()
 
