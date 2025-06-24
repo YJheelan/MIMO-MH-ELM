@@ -116,8 +116,8 @@ for prediction_horizon in range(1, 25): # Prediction horizon (Prédit 1 pas de t
         # ce qu'on veut est la production d'énergie prediction_horizon dans le futur
         Y[i, :] = input_matrix[i+window_size+prediction_horizon-1, :-2]  # Toutes les colonnes sauf sin/cos
         
-        #Chaque ligne de X contient 48 × 9 = 432 valeurs (48 points temporels × 9 variables)
-        #Chaque ligne de Y contient les 7 variables énergétiques à prédire au temps t+1
+        #Chaque ligne de X contient 48 × 10 = 480 valeurs (48 points temporels × 10 variables)
+        #Chaque ligne de Y contient les 8 variables énergétiques à prédire au temps t+1
     
     ## Remplacer les NaN par 0
     X = np.nan_to_num(X)
