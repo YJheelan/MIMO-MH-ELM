@@ -51,14 +51,17 @@ def split_train_test(X, Y, train_ratio=0.8):
     Y_train = Y[:trainSize, :]
     X_test = X[trainSize:, :]
     Y_test = Y[trainSize:, :]
-    '''
     print("split_train_test :")
-    print("train size", train_size)
+    print("train size", trainSize)
     print("len(X_train)", len(X_train))
     print("len(Y_train)", len(Y_train))
     print("len(X_test)",len(X_test))
     print(" len(Y_test)", len(Y_test))
-    '''
+
+    print(f".shape X_train",X_train.shape)
+    print(f".shape Y_train",Y_train.shape)
+    print(f".shape X_test",X_test.shape)
+    print(f".shape Y_test",Y_test.shape)
     return X_train, Y_train, X_test, Y_test
 
 def sliding_window_mimo_mh(X, max_horizon, window_size, num_rows):
@@ -110,4 +113,5 @@ def split_train_test(X, Y, train_ratio=0.8):
     print("len(Y_train)", len(Y_train))
     print("len(X_test)",len(X_test))
     print(" len(Y_test)", len(Y_test))
+
     return X_train, Y_train, X_test, Y_test
