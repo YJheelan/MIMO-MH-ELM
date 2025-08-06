@@ -9,20 +9,19 @@ La nature intermittente des énergies renouvelables pose plusieurs défis, notam
 
 Les performances des modèles de prévision énergétique dépendent directement de la qualité et de la représentativité des données. Pour capturer la dynamique des interactions entre les différentes sources d’énergie, nous utilisons des séries temporelles horaires détaillées, couvrant une période suffisante pour refléter la variabilité réelle. Une série temporelle est une suite d’observations indexée par le temps. Dans ce rapport, les séries temporelles représentent la production horaire d’électricité en MWh par différentes sources (Thermique, Hydraulique, Micro-hydraulique, Solaire photovoltaïque, Éolien, Bioénergies, Importations). Elles incluent également le coût moyen de production en e/MWh et la production totale en MWh. Ces séries sont gérées par EDF sur la région Corse (https://opendata-corse.edf.fr/pages/home0/), couvrent la période 2016–2022 avec une résolution horaire, garantissant leur fiabilité et la représentativité du contexte énergétique insulaire corse.
 
-## État d'Avancement (16/06/2025)
-### Code Disponible
-Les codes actuellement disponibles incluent :
-
-- MIMO-ELM : architecture Multi-Input Multi-Output avec ELM
-- Analyse de données : traitement et visualisation des données énergétiques
-
-### Développements à Réaliser
-Les fonctionnalités restant à implémenter sont :
-
-- Time GPT (https://github.com/Nixtla/nixtla) : pour obtenir une référence et faire un benchmark
-- Multi-Horizon (MH) : extension de MIMO-ELM pour la prévisions à différents horizons temporels
-- Réconciliation : mécanismes d'ajustement pour garantir la cohérence des prévisions
-
+## Implémentations et Modules
+- config.py
+- data_processing.py
+- training.py
+- visualization.py
+- persistence.py
+- siso.py
+- mimo.py
+- mimo_mh.py
+- reconciliation
+- mimo_mh_WLS
+- timegpt.py
+- main.py
 
 ## Références
 **<a id="ref1">[1]</a>** Sheraz Aslam, Herodotos Herodotou, Syed Muhammad Mohsin, Nadeem Javaid, Nouman Ashraf, and Shahzad Aslam. [A survey on deep learning methods for power load and renewable energy forecasting in smart microgrids](https://doi.org/10.1016/j.rser.2021.110992). Renewable and Sustainable Energy Reviews, 144 :110992, 2021-07-
