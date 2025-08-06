@@ -68,6 +68,13 @@ pip install numpy pandas scipy scikit-learn matplotlib seaborn
 python main.py
 ```
 
+#### Path Configuration
+Before running the project, ensure the Python path includes the project directory:
+```python
+import sys
+sys.path.append('Set the path to the folder containing the main.py file.')
+```
+
 #### Interactive Execution Pipeline
 
 The main script provides an interactive menu-driven interface for executing various model combinations. Upon launch, users can select from predefined execution scenarios or create custom model combinations.
