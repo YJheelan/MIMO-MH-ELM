@@ -49,7 +49,6 @@ Optimization technique ensuring forecast consistency across different aggregatio
 
 ### 5. Benchmarking Methods
 - **Persistence Models**: Simple baselines using historical values
-- **Advanced Baselines**: Comparison with state-of-the-art time series models
 
 ## Getting Started
 
@@ -90,7 +89,7 @@ The main script provides an interactive menu-driven interface for executing vari
 
 | Option | Models Executed | Description |
 |--------|-----------------|-------------|
-| **1** | Full Suite | SISO + MIMO + MIMO-MH + WLS + Persistence |
+| **1** | Full Suite | SISO + MIMO + MIMO-MH + MIMO-MH-WLS + Persistence |
 | **2** | Multi-Horizon Focus | MIMO-MH + MIMO-MH-WLS + Persistence |
 | **3** | Advanced Models | MIMO + MIMO-MH + MIMO-MH-WLS |
 | **4** | Hybrid Approach | SISO + MIMO + MIMO-MH-WLS |
