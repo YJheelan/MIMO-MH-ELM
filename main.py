@@ -9,13 +9,13 @@ Created on Fri Jul  4 16:24:42 2025
 Main Program - Energy Prediction with ELM
 """
 import sys
-# Mettre le chemin du dossier contenant le fichier main.py
+# Set the path to the folder containing the main.py file.
 # If needed, specify the path to the data.csv file in config.py
-sys.path.append('\\\mines-paristech.local\\Sophia\OIE\\Staff\\yjheelan\\Bureau\\STAGE\\CODE\\PROGRAMME\\Program_SISO_MIMO_MIMO-MH_MIMO-MH-WLS')
+sys.path.append('Set the path to the folder containing the main.py file.')
 import time
 import pandas as pd
 
-# Import des modules personnalisés
+# Importing custom modules
 from config import CONFIG
 print("CONFIG loaded:", CONFIG['data_file'])
 #Config
@@ -25,224 +25,16 @@ from visualization import (plot_model_comparison, plot_metrics_by_horizon,
                            plot_heatmaps, print_best_results, 
                            plot_combined_mimo_comparison_advanced,
                            compare_models_performance)
-# Module SISO
+# SISO Module SISO
 from siso import run_siso_experiments
-# Module MIMO
+# MIMO Module 
 from mimo import run_mimo_single_horizon_experiments
-#Module MIMO-MH
+# MIMO-MH Module 
 from mimo_mh import run_mimo_multihorizon_experiment, run_mimo_multihorizon_simple
-# Module Persistence
+# Persistence Module 
 from persistence import run_persistence_models
 #============================================================================
-"""# Version sans reconciliation
-def main():
-    print(f"\n{'='*60}")
-    print("PRÉDICTION AVEC SISO, MIMO et MIMO-MH")
-    print(f"{'='*60}")
-    start_time = time.time()
-    
-    try:
-        # 1. Chargement et prétraitement des données
-        input_matrix, num_rows, num_outputs = load_and_preprocess_data(CONFIG['data_file'])
-        # 2. Expériences SISO : horizon simple
-        print(f"\n{'='*60}")
-        print("PRÉDICTION AVEC SISO")
-        siso_results = run_siso_experiments(input_matrix, num_rows, num_outputs)
-        
-        # 3. Expériences MIMO : horizon simple
-        print(f"\n{'='*60}")
-        print("PRÉDICTION AVEC MIMO")
-        mimo_results,Y_test_mimo ,Y_pred_mimo = run_mimo_single_horizon_experiments(input_matrix, num_rows, num_outputs)
-        
-        # 4. Expérience MIMO multi-horizon
-        print(f"\n{'='*60}")
-        print("PRÉDICTION AVEC MIMO-MH")
-        mimo_mh_results,Y_test_mh,Y_pred_mh = run_mimo_multihorizon_experiment(input_matrix, num_rows, num_outputs)
-        #persistence
-        pers_results = run_persistence_models(input_matrix, num_rows, num_outputs)
-        
-        # 5. Combinaison des résultats
-        all_results = mimo_results + mimo_mh_results + siso_results + pers_results
-        df_results = pd.DataFrame(
-            all_results, 
-            columns=['Model', 'Horizon', 'Variable', 'nRMSE', 'nMAE', 'nMBE', 'R2']
-        )
-        
-        # 6. Affichage des résultats
-        print(f"\n{'='*60}")
-        print("RÉSULTATS")
-        print(df_results)
-        
-        # 7. Sauvegarde des résultats
-        df_results.to_csv('results.csv', index=False)
-        print(f"\nRésultats sauvegardés dans 'results.csv'")
-        
-        # 8. Visualisations
-        print(f"\n{'='*60}")
-        print("GÉNÉRATION DES GRAPHIQUES")
-        
-        # Graphique 1: Comparaison des modèles
-        plot_model_comparison(df_results)
-        
-        # Graphique 2 : Métriques par horizon
-        plot_metrics_by_horizon(df_results, 'MIMO-MH')
-        plot_metrics_by_horizon(df_results, 'MIMO')
-        plot_metrics_by_horizon(df_results, 'SISO')
-        # Graphique 3: Heatmaps
-        plot_heatmaps(df_results[df_results['Model'] == 'MIMO-MH'])
-        plot_heatmaps(df_results[df_results['Model'] == 'MIMO'])
-        plot_heatmaps(df_results[df_results['Model'] == 'SISO'])
-        
-        # Graphique 4: comparaison mimo et mimo-mh
-        plot_combined_mimo_comparison_advanced( mimo_results, mimo_mh_results, Y_test_mimo, Y_pred_mimo, 
-                                      Y_test_mh, Y_pred_mh, num_outputs, selected_horizons=[1, 6, 12, 18, 24])
-        
-        # 9. Temps d'exécution
-        execution_time = time.time() - start_time
-        print(f"Temps d'exécution total: {execution_time:.2f} secondes")
-        
-    except Exception as e:
-        print(f"Erreur lors de l'exécution: {str(e)}")
-        import traceback
-        traceback.print_exc()
-if __name__ == "__main__":
-    main()
-"""
-#============================================================================
-
-'''
-def main():
-    print("PRÉDICTION AVEC SISO, MIMO, MIMO-MH et RÉCONCILIATION WLS")
-    start_time = time.time()
-    
-    try:
-        # 1. Chargement et prétraitement des données
-        input_matrix, num_rows, num_outputs = load_and_preprocess_data(CONFIG['data_file'])
-        # 2. Expériences SISO : horizon simple
-        print(f"\n{'='*60}")
-        print("PRÉDICTION AVEC SISO")
-        siso_results = run_siso_experiments(input_matrix, num_rows, num_outputs)
-        
-        # 3. Expériences MIMO : horizon simple
-        print(f"\n{'='*60}")
-        print("PRÉDICTION AVEC MIMO")
-        mimo_results,Y_test_mimo ,Y_pred_mimo = run_mimo_single_horizon_experiments(input_matrix, num_rows, num_outputs)
-        #persistence
-        pers_results = run_persistence_models(input_matrix, num_rows, num_outputs)
-        
-        
-    
-        print("PRÉDICTION AVEC MIMO-MH")
-        experiment_results = run_mimo_multihorizon_experiment(input_matrix, num_rows, num_outputs)
-        
-        # Gestion des résultats selon la réconciliation activée ou non
-        if CONFIG['reconciliation']:
-            mimo_mh_results, mimo_mh_wls_results, Y_test_mh, Y_pred_mh, Y_pred_reconciled = experiment_results
-            all_results = mimo_mh_results + mimo_mh_wls_results + siso_results + pers_results + mimo_results
-            
-        else:
-            mimo_mh_results, Y_test_mh, Y_pred_mh = experiment_results
-            all_results = mimo_mh_results + siso_results + pers_results + mimo_results
-        
-        df_results = pd.DataFrame(
-            all_results, 
-            columns=['Model', 'Horizon', 'Variable', 'nRMSE', 'nMAE', 'nMBE', 'R2']
-        )
-        
-        
-        # Graphiques
-        plot_model_comparison(df_results)
-        plot_model_comparison_mean(df_results)
-        
-        if CONFIG['reconciliation']:
-            plot_metrics_by_horizon(df_results, 'MIMO-MH-WLS')
-            plot_metrics_by_horizon(df_results, 'MIMO-MH')
-            plot_metrics_by_horizon(df_results, 'MIMO')
-            plot_metrics_by_horizon(df_results, 'SISO')
-            plot_heatmaps(df_results[df_results['Model'] == 'MIMO-MH-WLS'])
-            plot_heatmaps(df_results[df_results['Model'] == 'MIMO-MH'])
-            plot_heatmaps(df_results[df_results['Model'] == 'MIMO'])
-            plot_heatmaps(df_results[df_results['Model'] == 'SISO'])
-        else:
-            plot_metrics_by_horizon(df_results, 'MIMO-MH')
-            plot_metrics_by_horizon(df_results, 'MIMO')
-            plot_metrics_by_horizon(df_results, 'SISO')
-            plot_heatmaps(df_results[df_results['Model'] == 'MIMO-MH'])
-            plot_heatmaps(df_results[df_results['Model'] == 'MIMO'])
-            plot_heatmaps(df_results[df_results['Model'] == 'SISO'])
-            
-            # Graphique 4: comparaison mimo et mimo-mh
-        plot_combined_mimo_comparison_advanced (mimo_mh_results, Y_test_mh, Y_pred_mh, num_outputs, selected_horizons=[1, 6, 12, 18, 24])
-            
-        # 6. Affichage des résultats
-        print(f"\n{'='*60}")
-        if CONFIG['reconciliation']:
-            print("RÉSULTATS")
-            print(df_results.groupby('Model')[['nRMSE', 'nMAE', 'R2']].mean())
-        print(df_results)
-            
-        # Temps d'exécution
-        execution_time = time.time() - start_time
-        print(f"Temps d'exécution total: {execution_time:.2f} secondes")
-        
-    except Exception as e:
-        print(f"Erreur lors de l'exécution: {str(e)}")
-        import traceback
-        traceback.print_exc()
-'''
-#============================================================================
-""" # FAST MIMO_MH MIMO_MH-WLS
-def main():
-    print("PRÉDICTION AVEC MIMO-MH et RÉCONCILIATION WLS")
-    start_time = time.time()
-    
-    try:
-        input_matrix, num_rows, num_outputs = load_and_preprocess_data(CONFIG['data_file'])
-        
-        print("PRÉDICTION AVEC MIMO-MH")
-        experiment_results = run_mimo_multihorizon_experiment(input_matrix, num_rows, num_outputs)
-        
-        # Gestion des résultats selon la réconciliation activée ou non
-        if CONFIG['reconciliation'] == True:
-            mimo_mh_results, mimo_mh_wls_results, Y_test_mh, Y_pred_mh, Y_pred_reconciled = experiment_results
-            all_results = mimo_mh_results + mimo_mh_wls_results
-        else:
-            mimo_mh_results, Y_test_mh, Y_pred_mh = experiment_results
-            all_results = mimo_mh_results
-        
-        df_results = pd.DataFrame(
-            all_results, 
-            columns=['Model', 'Horizon', 'Variable', 'nRMSE', 'nMAE', 'nMBE', 'R2']
-        )
-        
-        print("\n=== RÉSULTATS MIMO-MH ===")
-        if CONFIG['reconciliation'] == True :
-            print("Comparaison MIMO-MH vs MIMO-MH-WLS:")
-            print(df_results.groupby('Model')[['nRMSE', 'nMAE', 'R2']].mean())
-        print(df_results)
-        
-        # Graphiques
-        plot_model_comparison(df_results)
-        
-        if CONFIG['reconciliation'] == True:
-            plot_metrics_by_horizon(df_results, 'MIMO-MH')
-            plot_metrics_by_horizon(df_results, 'MIMO-MH-WLS')
-            plot_heatmaps(df_results[df_results['Model'] == 'MIMO-MH-WLS'])
-        else:
-            plot_metrics_by_horizon(df_results, 'MIMO-MH')
-            plot_heatmaps(df_results[df_results['Model'] == 'MIMO-MH'])
-        
-        # Temps d'exécution
-        execution_time = time.time() - start_time
-        print(f"Temps d'exécution total: {execution_time:.2f} secondes")
-        
-    except Exception as e:
-        print(f"Erreur lors de l'exécution: {str(e)}")
-        import traceback
-        traceback.print_exc()
-"""
-#============================================================================
-# Version qui demande à l'utilisateur les modèles à choisir
+# Version that asks the user which models to choose
 
 def display_menu():
     """Displays the experiment selection menu"""
@@ -624,4 +416,5 @@ def main():
         traceback.print_exc()
 
 if __name__ == "__main__":
+
     results = main()
